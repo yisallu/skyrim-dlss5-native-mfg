@@ -1,0 +1,47 @@
+{
+  "kind": "Sanitized historical observations, not a live status file",
+  "recordedAt": "2026-09-05T22:40:19+08:00",
+  "nativeProvider": "NVIDIA nvngx_dlssg.dll 310.7.0, signed",
+  "streamlineWrapper": "2.12.0",
+  "status": {
+    "bridgeReady": true,
+    "gameFrameGenerationOn": true,
+    "setOptionsAccepted": true,
+    "getStateResult": 0,
+    "appliedMultiplier": 3,
+    "actualFramesPresented": 3,
+    "dlssgStatus": 0,
+    "midpointReadyAtFirstCreate": true,
+    "backportReadyAtCreate": true,
+    "restartRequired": false,
+    "streamlineRebuildRequired": false,
+    "pipelineMayPredateDetour": false,
+    "universalRouteFailure": 0,
+    "intervalValidSamples": 19285,
+    "intervalInvalidSamples": 0,
+    "intervalSeenCountMask": 4,
+    "intervalSeenIndexMask": 3,
+    "realFpsMilli": 37800,
+    "dlssFpsMilli": 113399
+  },
+  "nr": {
+    "dispatchObserved": true,
+    "modelResolution": "1280x800",
+    "outputResolution": "2560x1600",
+    "typicalCostMs": 4.6,
+    "lastLoggedCostMs": 4.57
+  },
+  "temporalRequestsObserved": {
+    "count": 2,
+    "requestedPositions": ["1/3", "2/3"],
+    "note": "NGX Evaluate request trace, not captured final images or measured display spacing."
+  },
+  "limitations": [
+    "Only the tested machine, versions, and short session are represented.",
+    "The OptiScaler overlay showed red OFF while native runtime telemetry reported active 3X.",
+    "Exact cause of the overlay/runtime discrepancy was not fully established.",
+    "FPS without a presentation callback can be estimated by the unlocker.",
+    "HUD recomposition was not reported ready by the unlocker.",
+    "A/B motion quality, end-to-end latency, and long-session stability were not benchmarked."
+  ]
+}

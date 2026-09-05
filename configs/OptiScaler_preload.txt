@@ -1,0 +1,1 @@
+Load OptiScaler through the existing compatible SKSE plugin preloader.

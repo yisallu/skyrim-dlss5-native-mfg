@@ -1,0 +1,20 @@
+# Keep locally downloaded binaries, game data, and diagnostics out of this repo.
+*.dll
+*.asi
+*.exe
+*.addon64
+*.zip
+*.7z
+*.log
+*.csv
+*.dmp
+*.ess
+*.skse
+*.bak
+*.local.*
+downloads/
+generated/
+private/
+RTX40MFG-Universal.status.json
+RTX40MFG-Universal.json
+dlssnr-capture/
