@@ -24,23 +24,23 @@
 
 ## NR 模型找不到/无法初始化
 
-- 必须同时有 `DLSSNR\nvngx.dll_dlssnr.dll` 和 `DLSSNR\nvngx_dlssnr.dll`。
-- forwarder 不是模型，原有 `nvngx_dlss.dll` 也不是模型。
-- 模型必须适用于当前 GPU；4070 的测试使用用户提供的 Ada 兼容修改版 310.8.0。
+- 0.9.71 把 `nvngx_dlssnr.dll` 放在 `OptiScaler.dll` 旁边。旧的 `nvngx.dll_dlssnr.dll` forwarder 要移走，它不是模型。
+- `nvngx_dlss.dll` 也不是 NR 模型。
+- 当前固定的是修改版 310.9.16，Authenticode 无效。哈希不符就停，不要关安全软件硬跑。
 - 检查 `[Libraries] OptiDllPath` 是否指向实际伴随库目录，而不是游戏根目录或另一个 MO2 实例。
 - `[Upscalers] Dx11Upscaler=dlss_12` 是本次 NR/DLSS 桥接路径。
 - 有 LoadLibrary 成功记录不等于模型执行。需要本轮 `DlssNr_Dx12::Dispatch`。
 - 模型来源不明、哈希不符或安全软件拦截时，停止核实，不关安全软件强行执行。
 
-## `DLSS 310.5.2`，是不是没有 DLSS 5？
+## 界面上的 DLSS 版本是不是 NR？
 
 这是三个独立文件：
 
 | 文件 | 作用 | 本配方版本 |
 | --- | --- | --- |
-| `nvngx_dlss.dll` | 超分辨率 SR | 310.5.2 |
-| `nvngx_dlssnr.dll` | Neural Rendering 模型 | 310.8.0 |
-| `nvngx_dlssg.dll` | NVIDIA 帧生成 | 310.7.0 |
+| `nvngx_dlss.dll` | 超分辨率 SR | 310.9.16，NVIDIA 签名 |
+| `nvngx_dlssnr.dll` | Neural Rendering 模型 | 310.9.16 修改版，`Preset=2` |
+| `nvngx_dlssg.dll` | NVIDIA 帧生成 | 310.9.16，NVIDIA 签名 |
 
 应分别验证，不能通过更换 SR DLL 代替 NR 集成。
 
@@ -61,9 +61,9 @@ v0.2.0 的 [menu_common.cpp](https://github.com/Dagherbou/OptiScaler_DLSSNR/blob
 
 1. `FGInput=upscaler`、`FGOutput=dlssg`、`FGNvngxReplacement=None`。
 2. 使用的是 `DLSS w/Dx12`，而不是另一个无桥接 backend。
-3. FG 的 Streamline 在 `OptiScaler\streamline`，是 SDK 2.12.0 发布目录文件，没有覆盖 CS 原版。
-4. 只有一个 `RTX40MFGCore.asi`，且当前 `[Plugins] LoadAsiPlugins=true`、路径正确。
-5. Core 的 `%TEMP%\MfgUnlock-<PID>.log` 存在且 PID 是本轮游戏。
+3. FG 的 Streamline 在 `OptiScaler\streamline`，是 SDK 2.14.16 的 `bin\x64` 发布文件，没有覆盖 CS 的 `sl.*.dll`。
+4. 只有一个 `MFGUnlocker.asi`，`AdaMfgUnlock=false`，且 `[Plugins] LoadAsiPlugins=true`。
+5. 1.6.1 的日志在游戏根目录，文件名类似 `RTXMFG-SkyrimSE-<hash>.log`，不是 v1.2 的 `%TEMP%\MfgUnlock-<PID>.log`。
 6. `midpointReadyAtFirstCreate`、`backportReadyAtCreate` 是否为 true；是否提示重启或创建过早。
 7. 回到可移动的实际场景，非暂停、加载、切屏状态，重新观察。
 

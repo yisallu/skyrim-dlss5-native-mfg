@@ -1,6 +1,6 @@
 # 上古卷轴 5 SE：DLSS 5 神经渲染 + NVIDIA 原生 3X MFG
 
-基于 **RTX 4070 + Community Shaders + MO2** 的一次实际运行记录，整理可供人和其他 AI 重现的安装方法。验证日期：**2026-09-05**。
+基于 **RTX 4070 + Community Shaders + MO2** 的安装记录。游戏内遥测仍是 **2026-09-05** 那一轮；**2026-10-21** 只更新了二进制和配置，没有新的实机帧数。
 
 这里的“DLSS 5”指 `OptiScaler_DLSSNR` 调用的 NVIDIA Neural Rendering 模型后处理；不是 Bethesda 或 NVIDIA 为 Skyrim 发布的官方集成。MFG 使用 NVIDIA 的 `nvngx_dlssg.dll`，**不是 DLSSG-to-FSR3、Arturs、Nukem 或 XeFG 替代方案**。4070 上的解锁、DX11 桥接和神经渲染组合都属于非官方实验配置。
 
@@ -13,9 +13,19 @@ English: This is a version-pinned, experimental Skyrim SE reproduction guide for
 - 问题排查：[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
 - 脱敏验证记录：[evidence/session-summary.json](evidence/session-summary.json)
 
+## 0. 2026-10-21 性能更新
+
+这一轮跟上的是 NVIDIA 2026-10-16 的 Streamline **2.14.16**，以及同一 SDK 里签名有效的 DLSS SR / DLSSG **310.9.16**。NR 换成带 FP8 权重的修改版 **310.9.16**，配置里 `Preset=2`（Crazy Cuckoo Small FP8）。上游对这个权重的说法是推理最多约快 40%，那是模型对比，不是 Skyrim 实测。
+
+MFG 解锁从 RTX40MFGCore 1.2 换成 [MFG Unlocker 1.6.1](https://github.com/dashdogy/MFG-Unlocker/releases/tag/v1.6.1)。它和 310.9.16 在 RTX 40 上被上游测过。OptiScaler 0.9.71 自带的 `AdaMfgUnlock` 会改同一份 `nvngx_dlssg.dll`，**不能和 `MFGUnlocker.asi` 一起开**。`AdaBlackwellKernels` 也因此保持关闭。
+
+没有改的调校：`InterpolationCount=2`（3X）、`WorkingScale=0.52`、`ReversibleMode=3`、`RunBeforeSR=false`。周边压缩和额外 NR pass 都不开，那是画质/耗时取舍，不是这次的 NVIDIA 运行时更新。
+
+9 月 5 日的 4.6 ms 和约 113 FPS **不能**当成这套二进制的成绩。`evidence/session-summary.json` 只描述旧文件。1.6.1 不再写 `RTX40MFG-Universal.status.json`，`Read-MfgStatus.ps1` 不能给这轮解锁器出“正在运行”的结论。
+
 ## 1. 已验证与未验证
 
-本次运行同时观察到：
+下面是 **2026-09-05、旧二进制** 的运行记录，不是第 0 节这套文件的实测：
 
 | 项目 | 记录 |
 | --- | --- |
@@ -40,8 +50,8 @@ Skyrim SE 的 DX11 渲染
   -> OptiScaler 的 DX11 -> DX12 桥接，Dx11Upscaler=dlss_12
   -> DLSS 超分辨率 + DLSS-NR 模型处理
   -> OptiFG 从 upscaler 取得帧生成输入
-  -> 独立的 Streamline 2.12.0 + NVIDIA DLSSG 310.7.0
-  -> RTX40MFGCore 在进程内解锁并修正 Ada 时间位置
+  -> 独立的 Streamline 2.14.16 + NVIDIA DLSSG 310.9.16
+  -> MFGUnlocker 1.6.1 在进程内解锁
   -> 请求 2 张生成帧，加 1 张渲染帧，共 3X
 ```
 
@@ -49,8 +59,8 @@ Skyrim 本身没有原生 DLSS FG。只安装 MFG 解锁器没有用，**OptiSca
 
 两套 Streamline 必须分开：
 
-- `Shaders\Upscaling\Streamline`：保留 Upscaling 原有的 **2.10.3**，包括 `nvngx_dlss.dll`。
-- `SKSE\Plugins\OptiScaler\streamline`：额外提供帧生成用的 **2.12.0**。
+- `Shaders\Upscaling\Streamline`：插件仍是 Upscaling 原有的 **2.10.3**。只把其中的 `nvngx_dlss.dll` 换成 SDK `bin\x64` 里签名有效的 **310.9.16**。更高优先级 mod 里的同名文件也要换，否则 MO2 仍会加载旧 SR。
+- `SKSE\Plugins\OptiScaler\streamline`：帧生成用的 **2.14.16**。不要把这套 `sl.*.dll` 覆盖到 CS 目录。
 
 不要把后者覆盖到前者，也不要根据旧 README 中“仅 DX12 / 仅 RTX 50”的文字直接否定这条已记录的实验路径；同时不能因此推断所有 DX11 游戏都兼容。
 
@@ -64,11 +74,11 @@ Skyrim 本身没有原生 DLSS FG。只安装 MFG 解锁器没有用，**OptiSca
 | SKSE | **2.0.20**，与上述运行时匹配 |
 | Community Shaders | **1.8.0.0**，安装的 AIO 构建 |
 | Upscaling | **1.4.0** |
-| 原有 Streamline / DLSS SR | **2.10.3 / 310.5.2** |
-| OptiScaler_DLSSNR | **v0.2.0-dlssnr**，界面构建号 `9918b95` |
-| FG Streamline / DLSSG | **2.12.0 / 310.7.0** |
-| RTX40MFG-Unlock | **v1.2**，Core 文件版本 1.2.0.22 |
-| NR 模型 | **310.8.0**，用户提供的 Ada 兼容修改版 |
+| 原有 Streamline 插件 / DLSS SR | **2.10.3 / 310.9.16** |
+| OptiScaler-NR | **v0.9.71** |
+| FG Streamline / DLSSG | **2.14.16 / 310.9.16** |
+| MFG Unlocker | **v1.6.1**，文件版本 1.6.1.1021，加载名 `MFGUnlocker.asi` |
+| NR 模型 | **310.9.16** 修改版，`Preset=2`；无 NVIDIA 签名 |
 | 加载器 | 已正常工作的 `d3dx9_42.dll` SKSE 插件预加载器 |
 | 管理器 | MO2，经当前实例的 SKSE 启动 |
 
@@ -87,10 +97,12 @@ Skyrim 本身没有原生 DLSS FG。只安装 MFG 解锁器没有用，**OptiSca
 本记录使用的模型指纹：
 
 ```text
-文件版本：310.8.0
-文件大小：165840496 bytes
-SHA256：CEB6432F6FBDF44D886014BCD47241932BF8B67439FEEF9BBDD0961436662650
+文件版本：310.9.16
+文件大小：276162560 bytes
+SHA256：CDFA6C1EC784867182164C7836F324F087B5C9F374D0C9FE46F54999FEABF3ED
 ```
+
+该文件取自 referenceOnly 里的 standalone 归档根目录，含 `hnet-crazy-cuckoo-small-fp8` 权重。Authenticode 无效。不要改用归档里另一份体积不同的 `OptiScaler\streamline\nvngx_dlssnr.dll`。
 
 这是**已使用文件的指纹，不是 NVIDIA 对修改版的真实性或安全性背书**。本仓库不提供模型、不提供模型破解/补丁工具，也不声称能从普通安装包自动得到相同文件。请自行合法取得、核实来源；没有时先停在前提检查阶段，不能宣称完整复现。
 
@@ -100,11 +112,11 @@ SHA256：CEB6432F6FBDF44D886014BCD47241932BF8B67439FEEF9BBDD0961436662650
 
 安装需要的三个归档：
 
-1. [Dagherbou/OptiScaler_DLSSNR v0.2.0-dlssnr](https://github.com/Dagherbou/OptiScaler_DLSSNR/releases/tag/v0.2.0-dlssnr)：`OptiScaler-DLSSNR-v0.2.0.zip`。
-2. [NVIDIA-RTX/Streamline v2.12.0](https://github.com/NVIDIA-RTX/Streamline/releases/tag/v2.12.0)：`streamline-sdk-v2.12.0.zip`。
-3. [dashdogy/RTX40MFG-Unlock v1.2](https://github.com/dashdogy/RTX40MFG-Unlock/releases/tag/v1.2)：`Universal-RTX-40-MFG-Unlock-v1.2.zip`。
+1. [ShyVortex/OptiScaler-DLSSNR-PreSR-Multipass v0.9.71](https://github.com/ShyVortex/OptiScaler-DLSSNR-PreSR-Multipass/releases/tag/v0.9.71)：`OptiScaler-NR-v0.9.71.zip`。
+2. [NVIDIA-RTX/Streamline v2.14.16](https://github.com/NVIDIA-RTX/Streamline/releases/tag/v2.14.16)：`streamline-sdk-v2.14.16.zip`。
+3. [dashdogy/MFG-Unlocker v1.6.1](https://github.com/dashdogy/MFG-Unlocker/releases/tag/v1.6.1)：`MFGUnlocker-v1.6.1.zip`。这个压缩包里只有 `MFGUnlocker.dll`。
 
-原始参考项目：[ShyVortex/dlss-unlocked](https://github.com/ShyVortex/dlss-unlocked) 与 [v0.2.0 发布页](https://github.com/ShyVortex/dlss-unlocked/releases/tag/v0.2.0-dlssnr)。其整合包包含 **DLSSG-to-FSR3**，所以此处改用 NR 上游包并明确选择 NVIDIA 原生 FG。不要运行该整合安装器，也不要把其完整目录直接覆盖到游戏。
+模型来自 [dlss-unlocked NR-v0.9.71](https://github.com/ShyVortex/dlss-unlocked/releases/tag/NR-v0.9.71) 的 standalone 归档，只取根目录的 `nvngx_dlssnr.dll`。该整合包包含 **DLSSG-to-FSR3**、`dxgi.dll` 和 RTX 20/30 解锁器。不要运行安装器，也不要把其完整目录覆盖到游戏。
 
 不要使用浮动的 `latest` 代替固定版本。SHA256 用于固定输入，不替代来源和许可证检查。Community Shaders、Upscaling、SKSE 仍由各自正规渠道提供；本仓库不是整合包。
 
@@ -177,10 +189,11 @@ $Unlock = Join-Path $W 'native-mfg'
 ```text
 mods\Upscaling\
   Shaders\Upscaling\Streamline\        原有文件不动
-    nvngx_dlss.dll                    310.5.2
-    sl.*.dll                         2.10.3
+    nvngx_dlss.dll                    310.9.16，只替换这一个 SR 文件
+    sl.*.dll                         2.10.3，不要换成 2.14.16
   SKSE\Plugins\
     OptiScaler.dll
+    nvngx_dlssnr.dll                  310.9.16，放在 OptiScaler.dll 旁边
     OptiScaler.ini
     OptiScaler_preload.txt
     OptiScaler\
@@ -189,9 +202,10 @@ mods\Upscaling\
       libxess*.dll / libxell.dll      上游伴随库
       Licenses\
       DLSSNR\
-        nvngx.dll_dlssnr.dll          forwarder，不是模型
-        nvngx_dlssnr.dll              用户单独提供的模型
+        nvngx_dlssnr.dll              与上面同一份模型
 ```
+
+0.9.71 不再使用 `nvngx.dll_dlssnr.dll`。升级时把旧 forwarder 移出加载目录，不要留在 `DLSSNR` 里。
 
 首次部署：
 
@@ -203,16 +217,16 @@ if (!(Test-Path -LiteralPath $P)) { New-Item -ItemType Directory -Path $P | Out-
 Copy-Item -LiteralPath (Join-Path $NR 'OptiScaler.dll') -Destination $P
 Copy-Item -LiteralPath (Join-Path $NR 'OptiScaler') -Destination $P -Recurse
 Copy-Item -LiteralPath (Join-Path $NR 'Licenses') -Destination $C -Recurse
-Copy-Item -LiteralPath (Join-Path $NR 'READ ME - DLSS Neural Rendering.txt') -Destination $C
-New-Item -ItemType Directory -Path (Join-Path $C 'DLSSNR') | Out-Null
-Copy-Item -LiteralPath (Join-Path $NR 'nvngx.dll_dlssnr.dll') -Destination (Join-Path $C 'DLSSNR')
-
 $ModelPath = 'C:\YourModel\nvngx_dlssnr.dll'  # 必须修改
-$modelExpected = ($manifest.files | Where-Object { $_.path -like '*/nvngx_dlssnr.dll' }).sha256
+$modelExpected = ($manifest.files | Where-Object { $_.path -eq 'SKSE/Plugins/nvngx_dlssnr.dll' }).sha256
 if ((Get-FileHash -LiteralPath $ModelPath -Algorithm SHA256).Hash -ne $modelExpected) {
-    throw '模型不等于实测输入；核对来源和兼容性后，作为单独实验记录，不能冒充精确复现。'
+    throw '模型不等于固定指纹；核对来源和兼容性后，作为单独实验记录，不能冒充精确复现。'
 }
+Copy-Item -LiteralPath $ModelPath -Destination (Join-Path $P 'nvngx_dlssnr.dll')
+New-Item -ItemType Directory -Path (Join-Path $C 'DLSSNR') -Force | Out-Null
 Copy-Item -LiteralPath $ModelPath -Destination (Join-Path $C 'DLSSNR\nvngx_dlssnr.dll')
+$forwarder = Join-Path $C 'DLSSNR\nvngx.dll_dlssnr.dll'
+if (Test-Path -LiteralPath $forwarder) { throw '先移走旧的 NR forwarder，0.9.71 不再使用它。' }
 ```
 
 伴随库保留上游原样并保留许可证。**不要因为文件名里出现 AMD/FSR 就删掉它们**；以当前配置和实际 FG 提供者区分使用路线。
@@ -251,10 +265,12 @@ Enabled=true
 ApplyModel=true
 WorkingScale=0.5
 ReversibleMode=3
+RunBeforeSR=false
+Preset=2
 AutoCapture=false
 ```
 
-`ReversibleMode=3` 是 Hybrid proxy + composed。`WorkingScale=0.5` 是 NR 模型宽、高各为输出的一半，**不是 DLSS 超分质量档位**。
+`ReversibleMode=3` 是 Hybrid proxy + composed。`WorkingScale=0.5` 是 NR 模型宽、高各为当前阶段图像的一半，**不是 DLSS 超分质量档位**。`Preset=2` 选择 310.9 模型里的 FP8 性能网络。`RunBeforeSR=false` 保持后处理位置；把它改成 true 会改画面，也不是这次默认。
 
 ### 6.3 启用 CS Upscaling，关闭它自带的帧生成
 
@@ -308,7 +324,7 @@ $utf8 = New-Object System.Text.UTF8Encoding($false)
 5. 新一轮 `OptiScaler.log` 必须有实际 `DlssNr_Dx12::Dispatch` 和模型耗时，不能只看到“发现 DLL”就算完成。
 6. 保存这套已验证的 NR-only INI 和本轮日志。失败时先解决 NR，不继续叠加 MFG。
 
-界面顶部显示 `DLSS 310.5.2` 是正常的：这是超分 DLL 版本，不是 NR 模型版本。
+界面顶部显示 `DLSS 310.9.16` 是正常的：这是超分 DLL 版本。NR 模型也是 310.9.16，但是另一个文件，用 `Preset=2` 区分性能网络。
 
 ## 7. 第二阶段：加入 NVIDIA 原生 MFG
 
@@ -337,25 +353,16 @@ if ($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'NVIDIA
 
 ### 7.2 通过 OptiScaler 加载解锁 Core
 
-**这是本机验证过的特定加载方式，不是上游 UAL + ReShade 通用安装法。**
-
-仅将 `RTX40MFGCore.dll` 复制并改名为 `RTX40MFGCore.asi`：
+**v1.6.1 压缩包只有一个 DLL。** 按上游说明把它放到 OptiScaler 的 plugins 目录，并保持 `MFGUnlocker.asi` 这个名字：
 
 ```powershell
 $plugins = Join-Path $C 'plugins'
 if (Test-Path -LiteralPath $plugins) { throw '已有 ASI 插件目录，先检查是否会重复加载。' }
 New-Item -ItemType Directory -Path $plugins | Out-Null
-Copy-Item -LiteralPath (Join-Path $Unlock 'RTX40MFGCore.dll') -Destination (Join-Path $plugins 'RTX40MFGCore.asi')
-$licenseTarget = Join-Path $C 'Licenses\RTX40MFG-Unlock'
-New-Item -ItemType Directory -Path $licenseTarget | Out-Null
-foreach ($name in @('LICENSE','MINHOOK-LICENSE.txt','README.md','SHA256SUMS.txt')) {
-    Copy-Item -LiteralPath (Join-Path $Unlock $name) -Destination $licenseTarget
-}
+Copy-Item -LiteralPath (Join-Path $Unlock 'MFGUnlocker.dll') -Destination (Join-Path $plugins 'MFGUnlocker.asi')
 ```
 
-原理：v1.2 Core 自身在 `DllMain` 初始化；OptiScaler ASI 加载器可提前加载它。Core 默认 Follow game，倍率由 OptiScaler 请求。**不能假设后续版本仍兼容此改名方式。**
-
-本配方不安装 `RTX40MFG.asi`、`RTX40MFG-UI.addon64`、UAL、ReShade，也不添加游戏根目录代理 DLL。不要同时加载 Core 的两个副本。
+不要同时留下 `RTX40MFGCore.asi`。不要把 `AdaMfgUnlock` 设为 true。本配方不安装 UAL、ReShade，也不添加游戏根目录代理 DLL。不要加载两份解锁器。
 
 检查游戏根目录是否已有 `RTX40MFG-Universal.json`：旧配置可能覆盖 Follow game。若存在先备份、审查，不盲删；本次验证使用默认 Follow game。Core 自动产生的 `.status.json` 是诊断输出，不是手工安装的插件。
 
@@ -378,7 +385,11 @@ FGOutput=dlssg
 FGNvngxReplacement=None
 [DLSSG]
 InterpolationCount=2
+AdaMfgUnlock=false
 UseGamesReflexMarkers=false
+[DlssNr]
+Preset=2
+RunBeforeSR=false
 [Plugins]
 LoadAsiPlugins=true
 ```
@@ -407,41 +418,17 @@ foreach ($entry in $manifest.files) {
 
 ```text
 <日志目录>\OptiScaler.log
-<游戏根目录>\RTX40MFG-Universal.status.json
-%TEMP%\MfgUnlock-<本轮Skyrim进程PID>.log
-%TEMP%\MfgUnlock-intervals-<本轮Skyrim进程PID>.csv
+<游戏根目录>\RTXMFG-SkyrimSE-<path-hash>.log
 ```
 
-状态脚本只读文件和进程信息，不注入游戏、不改任何配置：
+`Read-MfgStatus.ps1` 只认识 v1.2 的 `RTX40MFG-Universal.status.json`。1.6.1 不写那个文件，也不能再用它的 `midpointReady` / CSV 字段宣布 3X。2026-10-21 没有新的实机遥测。
 
-```powershell
-$statusPath = Join-Path $G 'RTX40MFG-Universal.status.json'
-$first = .\scripts\Read-MfgStatus.ps1 -StatusPath $statusPath
-Start-Sleep -Seconds 2
-$second = .\scripts\Read-MfgStatus.ps1 -StatusPath $statusPath
-$second | Format-List
-if (!$second.IsLive -or !$second.TelemetryConsistent) { throw '当前运行尚未得到一致的成功证据。' }
-if ($second.TemporalSamples -le $first.TemporalSamples) { throw '采样未增加；回到活动场景后再检查。' }
-```
+对当前文件，先核对版本，再看新的一轮日志：
 
-合格的运行状态应接近：
-
-```text
-Verdict                  LiveTelemetryConsistent
-AppliedMultiplier        3
-FramesPresentedSinceQuery 3
-DlssgStatus               0
-```
-
-同时人工确认：
-
-1. `activeProviderPath` 指向本配方的 `OptiScaler\streamline\nvngx_dlssg.dll`，版本 310.7.0，与签名/哈希核对一致。
-2. `midpointReadyAtFirstCreate`、`backportReadyAtCreate` 为 true，`restartRequired` 为 false。
-3. 本轮 NR 日志仍持续 Dispatch。MFG 成功不能替代 NR 验证，反之亦然。
-4. CSV 中 `count=2`，请求位置交替为 1/3 和 2/3。CSV 的 `submitDeltaUs` 是 CPU 调用间隔，**不是最终显示帧间隔**。
-5. 转动视角，检查字幕、准星、菜单、人物边缘、透明效果是否异常。发现冻结/重复帧/拖影时，不能只用 FPS 数字宣布成功。
-
-脚本的 `LiveTelemetryConsistent` 只说明本轮诊断相互一致，**不是视觉质量认证**。它不能从 JSON 文件验证签名，也不能证明 DLSS-NR 的运行或最终图像独立性。
+1. `OptiScaler\streamline\nvngx_dlssg.dll` 为 310.9.16，Authenticode 有效，哈希与 `versions.json` 一致。
+2. 本轮 `OptiScaler.log` 仍有 `DlssNr_Dx12::Dispatch`，且模型预设是 2。MFG 日志不能替代 NR 验证。
+3. 游戏根目录里本轮的 `RTXMFG-SkyrimSE-*.log` 属于这次进程。没有这份日志时，不要把 9 月 5 日的 3X 记录当成现在的结果。
+4. 转动视角，检查字幕、准星、菜单、人物边缘、透明效果是否异常。发现冻结、重复帧或拖影时，不能只用 FPS 数字宣布成功。
 
 游戏退出后，文件可能仍留着成功状态。脚本默认检查 PID、进程起始时间和心跳时间；`-Historical` 只供查看归档，永远不作为“现在生效”的证明。
 

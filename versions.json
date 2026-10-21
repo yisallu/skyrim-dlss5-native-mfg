@@ -1,82 +1,94 @@
 {
   "recordedDate": "2026-09-05",
-  "scope": "One Windows RTX 4070 Skyrim SE session; not a general compatibility guarantee.",
+  "binariesInstalled": "2026-10-21",
+  "scope": "RTX 4070 file pin for Skyrim SE. The 2026-09-05 play session does not measure these binaries.",
+  "performanceIntent": {
+    "dlssSuperResolution": "310.9.16 signed feature DLL from Streamline 2.14.16. CS sl.dlss.dll stays 2.10.3.",
+    "dlssFrameGeneration": "310.9.16 signed nvngx_dlssg.dll with Streamline 2.14.16 FG plugins.",
+    "neuralRendering": "Patched 310.9.16 model. Preset 2 selects hnet-crazy-cuckoo-small-fp8. Upstream documents up to 40% lower inference versus the full-precision teacher; that figure is not a Skyrim measurement.",
+    "mfgUnlock": "dashdogy MFG Unlocker 1.6.1, loaded once as MFGUnlocker.asi. Do not also set AdaMfgUnlock=true.",
+    "kept": "InterpolationCount=2, WorkingScale=0.52, ReversibleMode=3, RunBeforeSR=false. Spatial compression and extra NR passes stay off."
+  },
   "tested": {
     "gpu": "GeForce RTX 4070 12 GB",
-    "driver": "616.64",
+    "driverAtPlaySession": "616.64",
+    "driverAtBinaryInstall": "616.92 (32.0.16.1692)",
     "outputResolution": "2560x1600",
     "gameRuntime": "1.5.97.0",
     "skse": "2.0.20",
     "communityShaders": "1.8.0.0 (installed AIO build, not identified solely by Nexus metadata)",
     "upscaling": "1.4.0",
-    "gameStreamline": "2.10.3",
-    "dlssSuperResolution": "310.5.2",
-    "optiScalerFileVersion": "10.0.0.1",
-    "optiScalerOverlayBuild": "9918b95 / 20260903_150817",
-    "nativeFgStreamline": "2.12.0",
-    "nativeFgProvider": "310.7.0",
-    "neuralRenderingModel": "310.8.0 (user-supplied Ada-compatible modified model)",
-    "mfgUnlockCore": "1.2.0.22",
+    "gameStreamlinePlugins": "2.10.3",
+    "dlssSuperResolution": "310.9.16",
+    "optiScalerFileVersion": "0.9.71.0",
+    "nativeFgStreamline": "2.14.16",
+    "nativeFgProvider": "310.9.16",
+    "neuralRenderingModel": "310.9.16 patched Ada-compatible model, not NVIDIA-signed",
+    "nrPreset": 2,
+    "mfgUnlock": "1.6.1.1021",
     "multiplier": 3,
-    "nrWorkingScale": 0.5
+    "nrWorkingScale": 0.52,
+    "playSession": "2026-09-05 on the previous binaries only"
   },
   "downloads": [
     {
       "id": "optiscaler-nr",
-      "tag": "v0.2.0-dlssnr",
-      "name": "OptiScaler-DLSSNR-v0.2.0.zip",
-      "url": "https://github.com/Dagherbou/OptiScaler_DLSSNR/releases/download/v0.2.0-dlssnr/OptiScaler-DLSSNR-v0.2.0.zip",
-      "sha256": "8eece7a4d7de6de5917f0c99ac60540b2d77022e7699bba717b0a6d9e1829bce",
-      "hashSource": "GitHub release asset digest"
+      "tag": "v0.9.71",
+      "name": "OptiScaler-NR-v0.9.71.zip",
+      "url": "https://github.com/ShyVortex/OptiScaler-DLSSNR-PreSR-Multipass/releases/download/v0.9.71/OptiScaler-NR-v0.9.71.zip",
+      "sha256": "7f098e04db80d3d577cb77fe5544729c4aeaf0f05b8e9c9735bf38fb3ce673c1",
+      "hashSource": "Local archive of the GitHub release asset"
     },
     {
       "id": "streamline",
-      "tag": "v2.12.0",
-      "name": "streamline-sdk-v2.12.0.zip",
-      "url": "https://github.com/NVIDIA-RTX/Streamline/releases/download/v2.12.0/streamline-sdk-v2.12.0.zip",
-      "sha256": "f5c0a3d870707dddc3570fb4bcd3655cf48a8a68c3a9d342910cfa21b77dcf48",
-      "hashSource": "GitHub release asset digest and local archive"
+      "tag": "v2.14.16",
+      "name": "streamline-sdk-v2.14.16.zip",
+      "url": "https://github.com/NVIDIA-RTX/Streamline/releases/download/v2.14.16/streamline-sdk-v2.14.16.zip",
+      "sha256": "32041e51db0cab709a271b72a352281b690c2abbd669a827809401a5dd23956b",
+      "hashSource": "Local archive of the GitHub release asset"
     },
     {
       "id": "native-mfg",
-      "tag": "v1.2",
-      "name": "Universal-RTX-40-MFG-Unlock-v1.2.zip",
-      "url": "https://github.com/dashdogy/RTX40MFG-Unlock/releases/download/v1.2/Universal-RTX-40-MFG-Unlock-v1.2.zip",
-      "sha256": "137869ecf44099ff51e90926011a44566a5c592b65bd0551ffa67cf423bc6429",
-      "hashSource": "GitHub release asset digest and local archive"
+      "tag": "v1.6.1",
+      "name": "MFGUnlocker-v1.6.1.zip",
+      "url": "https://github.com/dashdogy/MFG-Unlocker/releases/download/v1.6.1/MFGUnlocker-v1.6.1.zip",
+      "sha256": "abe4d6ae7eab1ea4cacc4775b05521c459516ed72f434784e4420080571e87c5",
+      "hashSource": "Local archive of the GitHub release asset"
     }
   ],
   "referenceOnly": {
     "project": "https://github.com/ShyVortex/dlss-unlocked",
-    "release": "https://github.com/ShyVortex/dlss-unlocked/releases/tag/v0.2.0-dlssnr",
-    "name": "dlss-unlocked-standalone_DLSSNR-v0.2.0.zip",
-    "sha256": "595c62e69b781dae1be228bfa2b00aa1ca8adce7eece50b208a67e2e28feb50a",
-    "warning": "Contains a DLSSG-to-FSR3 route. Do not run its installer for this native-MFG recipe."
+    "release": "https://github.com/ShyVortex/dlss-unlocked/releases/tag/NR-v0.9.71",
+    "name": "dlss-unlocked-standalone-NR-v0.9.71.zip",
+    "sha256": "988270665c672522c70f6b658b1c7dc3857e3ad894f26b5eb471bd5465b0eb41",
+    "warning": "Contains DLSSG-to-FSR3, a dxgi proxy and an RTX 20/30 unlocker. Do not run its installer. The pinned NR model was extracted from this archive and checked separately."
   },
   "files": [
     {
       "path": "SKSE/Plugins/OptiScaler.dll",
-      "sha256": "8f526752d82c9cba99bf747a216a8caccd59a585d9ed0e217a8d47ab3c7c4998"
+      "sha256": "fa6cd9f7a8df4ce5a22fbdd75420cebfaad62b612ee02c79a93974d67867f331"
     },
     {
-      "path": "SKSE/Plugins/OptiScaler/DLSSNR/nvngx.dll_dlssnr.dll",
-      "sha256": "17cf51d25d142d0be15fcac945cc928c37849a1cb61011cb9c742d72df86647c"
-    },
-    {
-      "path": "SKSE/Plugins/OptiScaler/DLSSNR/nvngx_dlssnr.dll",
-      "sha256": "ceb6432f6fbdf44d886014bcd47241932bf8b67439feef9bbdd0961436662650",
+      "path": "SKSE/Plugins/nvngx_dlssnr.dll",
+      "sha256": "cdfa6c1ec784867182164c7836f324f087b5c9f374d0c9fe46f54999feabf3ed",
       "redistribute": false,
-      "note": "Fingerprint of the user-supplied modified file only; not a NVIDIA authenticity endorsement."
+      "note": "Fingerprint of the patched 310.9.16 file only. Not NVIDIA-signed. The same bytes are also placed at SKSE/Plugins/OptiScaler/DLSSNR/nvngx_dlssnr.dll. Do not leave the old forwarder beside it."
     },
     {
-      "path": "SKSE/Plugins/OptiScaler/plugins/RTX40MFGCore.asi",
-      "sha256": "9ae8702ace7bedc13dc050b8fc6acbb09ee81fca8b04f35b1c68f6910c852808",
-      "sourceName": "RTX40MFGCore.dll"
+      "path": "SKSE/Plugins/OptiScaler/plugins/MFGUnlocker.asi",
+      "sha256": "24e3e6a8c07639fd9cbd79274e4eb21cc65a13f0453e1157720620c3d6286b33",
+      "sourceName": "MFGUnlocker.dll"
     },
     {
       "path": "SKSE/Plugins/OptiScaler/streamline/nvngx_dlssg.dll",
-      "sha256": "135eaf0733c1e37381a8c28abcf7a862404a54132b81787c04e35d09efc5e36f",
-      "authenticodeAtTest": "Valid / NVIDIA Corporation"
+      "sha256": "8d59d49b36410dd6b62fef2503a5871d347415bd85d943fa0848563a95dd50c7",
+      "authenticodeAtInstall": "Valid / NVIDIA Corporation"
+    },
+    {
+      "path": "Shaders/Upscaling/Streamline/nvngx_dlss.dll",
+      "sha256": "d00b5b0ab29c3ca101b70c3a5ecb3a01b7ef33766a3383a28a18623083e6123e",
+      "authenticodeAtInstall": "Valid / NVIDIA Corporation",
+      "note": "Feature DLL only. Leave sl.dlss.dll and the other CS Streamline plugins at 2.10.3."
     }
   ]
 }
