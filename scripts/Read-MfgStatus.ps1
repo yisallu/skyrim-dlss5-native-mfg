@@ -16,9 +16,6 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-# Parses the v1.2 RTX40MFG-Universal.status.json schema only.
-# MFG Unlocker 1.6.1 does not write that file. Do not treat a result as proof of the 2026-10-21 stack.
-
 $item = Get-Item -LiteralPath $StatusPath -ErrorAction Stop
 # A live writer may be replacing the JSON. Retry a short partial read, not a bad schema.
 $state = $null

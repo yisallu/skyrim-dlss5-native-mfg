@@ -1,7 +1,6 @@
 {
   "kind": "Sanitized historical observations, not a live status file",
   "recordedAt": "2026-09-05T22:40:19+08:00",
-  "appliesToBinaries": "Streamline 2.12.0 / DLSSG 310.7.0 / NR 310.8.0. Not the 2026-10-21 binaries.",
   "nativeProvider": "NVIDIA nvngx_dlssg.dll 310.7.0, signed",
   "streamlineWrapper": "2.12.0",
   "status": {

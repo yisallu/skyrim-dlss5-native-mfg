@@ -16,12 +16,12 @@ GPU/驱动、MO2 当前实例/profile、文件优先级、overwrite、加载器�
 不接受 FSR/Arturs/Nukem/XeFG 替代，也不要只看到官方 RTX 50 限制就断言
 RTX 4070 不可能使用本仓库记录的非官方路线。
 
-先核实 nvngx_dlssnr.dll 是否为 versions.json 里的 310.9.16 指纹。缺少或哈希不符时说明
-前提未满足。不要虚构下载来源，不把 SR/RR 文件改名充数，也不要运行 dlss-unlocked 安装器。
+先核实用户是否有合法取得且适用于 Ada 的 nvngx_dlssnr.dll；缺少时明确说明
+前提未满足。不要虚构下载来源，不下载来源不明的模型，不把 SR/RR 文件改名充数。
 
 严格固定版本和哈希，保留现有 CS Streamline，独立部署 FG Streamline。
 只有在游戏正常退出后才能修改 DLL/设置。先备份，先跑通 NR-only，
-再加载 MFG Unlocker 1.6.1（只保留 MFGUnlocker.asi）并请求 3X。不要同时设置 AdaMfgUnlock=true。不要操作存档、驱动、注册表或安全设置。
+再加载 v1.2 Core 并请求 3X。不要操作存档、驱动、注册表或安全设置。
 
 不要整包运行 dlss-unlocked 安装器，不运行 setup_windows.bat 或签名覆盖 reg。
 遵循 MO2 布局，优先使用本机已验证兼容的 SKSE preloader。
@@ -60,7 +60,7 @@ Ada midpoint 修正、appliedMultiplier、actualFramesPresented、dlssgStatus、
 - 保存并正常退出游戏才能切换 DLL/INI。卡启动和正在游玩的会话要区分，不杀有未保存进度的游戏。
 - 不静默取消安全设置、替换系统 NGX、安装驱动或运行陌生注册表脚本。
 - 第三方修改模型与原生 FG 提供者是两回事。模型哈希不是签名；本配方 FG 提供者应为 NVIDIA 签名有效的原文件。
-- `MFGUnlocker.dll` 改名为 `MFGUnlocker.asi` 只针对记录的 v1.6.1。不要和 `AdaMfgUnlock=true` 或第二份解锁器一起加载。
+- Core 的 `.dll -> .asi` 加载方式仅针对记录过的 v1.2；不能推广到任意 DLL。
 - 初始使用固定 3X，不因 `numFramesToGenerateMax=5` 就切到 6X；容量不等于实测质量。
 - 保留 NR-only 回退，不以 FSR 的成功替代 NVIDIA 路线的失败。
 - 任何上传仅包含脱敏资料；不上传模型、插件二进制、存档、完整用户日志或账号信息。

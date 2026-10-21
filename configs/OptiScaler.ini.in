@@ -13,8 +13,6 @@ FGNvngxReplacement=None
 [DLSSG]
 ; Two generated frames plus one rendered frame = 3X.
 InterpolationCount=2
-; External MFG Unlocker 1.6.1. Never combine with the built-in Ada unlock.
-AdaMfgUnlock=false
 UseGamesReflexMarkers=false
 
 [Inputs]
@@ -68,7 +66,4 @@ Enabled=true
 ApplyModel=true
 WorkingScale=0.5
 ReversibleMode=3
-; Post-SR keeps the tuned placement. Preset 2 is the FP8 performance network in nvngx_dlssnr.dll 310.9.
-RunBeforeSR=false
-Preset=2
 AutoCapture=false
