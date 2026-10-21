@@ -2,6 +2,22 @@
 
 先看本轮的 PID、日志修改时间和 JSON `heartbeat`。游戏退出后留存的成功状态不是当前证据。
 
+## 只剩 UI、世界全黑
+
+先看 OptiScaler 日志里 `DLSSFeatureDx12::EvaluateInternal` 的结果，**不要只看 `InitDLSS _CreateFeature` 是否 Success**。
+
+```text
+[I] DLSSFeatureDx12::InitDLSS _CreateFeature result: NVSDK_NGX_Result_Success
+[E] DLSSFeatureDx12::EvaluateInternal _EvaluateFeature result: BAD00001
+[I] IFeature_Dx11wDx12::Evaluate DLSS-NR: ... (upscale ok: false, enabled: true)
+```
+
+`BAD00001` 是 NGX 的 FeatureNotSupported：超分特征创建成功但每帧执行被拒，桥接拿不到超分输出，世界画面为空；Skyrim 的 UI 之后单独绘制，所以只剩顶部一条。此时解锁器 JSON 会显示 `dlssSrDetected=true`、`dlssSrRunning=false`、`ngxEvaluateCalls=0`。
+
+已知实例：DLSS SR 310.9.16 + Streamline 2.14.16 在这条 D3D11→D3D12 桥接上正是如此。当时先误判为 Preset M，改成 Preset K 后问题依旧（`DLSS SR Create ... gameHint=K` 证明预设已生效）。**换预设不能修复这类失败**，应整体回退运行时版本。
+
+不要用“改 ini 预设 / 开 Spoofing / 叠加另一个 FG 插件”的方式硬试；先回滚到本机实测可用的完整组合。
+
 ## 没有 OptiScaler 菜单
 
 - 确认从正确的 MO2 实例启动 SKSE，而不是 Steam 直接启动游戏。

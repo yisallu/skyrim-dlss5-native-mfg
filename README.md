@@ -13,7 +13,21 @@ English: This is a version-pinned, experimental Skyrim SE reproduction guide for
 - 问题排查：[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
 - 脱敏验证记录：[evidence/session-summary.json](evidence/session-summary.json)
 
-2026-10-21 第一次换上 310.9.16 时世界全黑，只剩顶部界面。原因是默认预设落到了 Preset M（状态里的 `dlssSrGameHint=13`），而 Community Shaders 的 Streamline 仍是 2.10.3。修正是整套 Streamline DLSS 插件换成 2.14.16，并把 Community Shaders 的 `presetDLSS` 固定为 Preset K，OptiScaler 的 `RenderPresetForAll=11`。这次修正还没有新的实机帧数。
+2026-10-21 换上 DLSS 310.9.16 + Streamline 2.14.16 后世界全黑，只剩顶部一条界面。
+
+当时误判为预设问题（Preset M），改成 Preset K 后**问题依旧**。2026-10-22 用本轮 OptiScaler 日志确认了真正原因：
+
+```text
+[I] DLSSFeatureDx12::InitDLSS _CreateFeature result: NVSDK_NGX_Result_Success
+[E] DLSSFeatureDx12::EvaluateInternal _EvaluateFeature result: BAD00001   (每帧重复)
+[I] IFeature_Dx11wDx12::Evaluate DLSS-NR: ... (upscale ok: false, enabled: true)
+```
+
+`CreateFeature` 成功、`gameHint=K` 也确实生效，但 `EvaluateFeature` 每帧返回 `BAD00001`（NGX 的 FeatureNotSupported）。超分特征建得出来却执行不了，桥接拿不到超分输出，因此世界画面为空；Skyrim 的 UI 是之后单独绘制的，所以只剩顶部一条。同期解锁器记录 `dlssSrDetected=true` 但 `dlssSrRunning=false`，帧生成 `ngxEvaluateCalls=0`。
+
+结论：**310.9.16 运行时在这条 D3D11→D3D12 桥接上不可用**，与预设无关，改预设不能修复。已整体回滚到 2.10.3 / 310.5.2 SR + 2.12.0 / 310.7.0 FG + RTX40MFGCore 1.2。回滚前的坏档存于 `scratch/dlss5-mfg-20261021/broken-310.9.16-20261022-rollback/`。
+
+排查这类"只剩 UI"时，先看 OptiScaler 日志里有没有 `EvaluateInternal ... BAD00001`，不要只看 `Create` 是否成功。
 
 ## 1. 已验证与未验证
 
