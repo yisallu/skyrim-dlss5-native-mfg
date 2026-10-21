@@ -13,7 +13,7 @@ English: This is a version-pinned, experimental Skyrim SE reproduction guide for
 - 问题排查：[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
 - 脱敏验证记录：[evidence/session-summary.json](evidence/session-summary.json)
 
-2026-10-21 试过 Streamline 2.14.16、签名版 DLSS SR/DLSSG 310.9.16、OptiScaler-NR 0.9.71、`Preset=2` 的修改版 NR 310.9.16 和 MFG Unlocker 1.6.1。本机结果是世界全黑，只剩顶部一条界面。解锁器记录到超分尺寸 1505×941 → 2560×1600，但 `dlssSrRunning=false`，帧生成 `ngxEvaluateCalls=0`。这套文件已从本机撤下，不要按那次提交安装。
+2026-10-21 第一次换上 310.9.16 时世界全黑，只剩顶部界面。原因是默认预设落到了 Preset M（状态里的 `dlssSrGameHint=13`），而 Community Shaders 的 Streamline 仍是 2.10.3。修正是整套 Streamline DLSS 插件换成 2.14.16，并把 Community Shaders 的 `presetDLSS` 固定为 Preset K，OptiScaler 的 `RenderPresetForAll=11`。这次修正还没有新的实机帧数。
 
 ## 1. 已验证与未验证
 
