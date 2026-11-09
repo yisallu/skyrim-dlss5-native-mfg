@@ -12,11 +12,49 @@
 [I] IFeature_Dx11wDx12::Evaluate DLSS-NR: ... (upscale ok: false, enabled: true)
 ```
 
-`BAD00001` 是 NGX 的 FeatureNotSupported：超分特征创建成功但每帧执行被拒，桥接拿不到超分输出，世界画面为空；Skyrim 的 UI 之后单独绘制，所以只剩顶部一条。此时解锁器 JSON 会显示 `dlssSrDetected=true`、`dlssSrRunning=false`、`ngxEvaluateCalls=0`。
+`BAD00001` 是 NGX 的 FeatureNotSupported：超分特征创建成功但每帧执行被拒，桥接拿不到超分输出，世界画面为空；Skyrim 的 UI 之后单独绘制，所以只剩顶部一条。
 
-已知实例：DLSS SR 310.9.16 + Streamline 2.14.16 在这条 D3D11→D3D12 桥接上正是如此。当时先误判为 Preset M，改成 Preset K 后问题依旧（`DLSS SR Create ... gameHint=K` 证明预设已生效）。**换预设不能修复这类失败**，应整体回退运行时版本。
+**然后马上看解锁器日志 `RTXMFG-skyrimse-*.log`（游戏目录）里有没有：**
 
-不要用“改 ini 预设 / 开 Spoofing / 叠加另一个 FG 插件”的方式硬试；先回滚到本机实测可用的完整组合。
+```text
+Unified GPU selection: family=conflict; restart required
+```
+
+有这一行，就是 MFG Unlocker 1.6.1 / 1.7.0 的 GPU 选择被 Community Shaders 的 D3D11 设备打成了 conflict，之后它对每个 D3D12 Evaluate 返回 `kRejected`（= `BAD00001`）。这与 DLSS SR 版本、预设无关：
+
+- 2026-10-21：SR 310.9.16 + MFG Unlocker 1.6.1 → 黑屏（当时误判为 310.9.16 / Preset M）。
+- 2026-10-24：SR **310.5.2** + MFG Unlocker 1.6.1 → 同样黑屏。
+- 2026-11-10：SR 310.9.16 + MFG Unlocker 1.7.0 → 黑屏；用 [`scripts/Patch-MFGUnlockerConflict.ps1`](../scripts/Patch-MFGUnlockerConflict.ps1) 修补后 → `upscale ok: true`，NR 运行，3X 生效。
+- 只有 RTX40MFGCore 1.2（没有这段逻辑）的旧组合一直正常。
+
+处理：用修补脚本生成 `MFGUnlocker.asi`，或退回 RTX40MFGCore 1.2 + DLSSG 310.7.0 + FG Streamline 2.12.0 的基线。**换预设、换 SR 版本、开 Spoofing 都修不了这个问题。**
+
+若没有 `family=conflict` 却仍是 `BAD00001`，才继续按版本组合排查，并保留本轮两份日志。
+
+## 游戏卡死（未响应），但不是黑屏
+
+先判断卡在哪里，再决定动 DLSS 还是动别的模组。游戏未响应后，用 Windows SDK 的 `cdb.exe` 非侵入附加抓一次堆栈（只读，不改进程）：
+
+```powershell
+& 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\cdb.exe' -pv -p (Get-Process SkyrimSE).Id `
+  -c '!runaway 1;~0kL 25;~*kL 12;qd' > stacks.txt
+```
+
+注意：启动和读档时短暂"未响应"是正常的，至少等 30 秒以上再判断。
+
+2026-11-10 本机两次卡死，堆栈完全一致：
+
+```text
+主线程   SkyrimSE+0x5acc05 → +0x5af4f4 → hdtsmp64 → SkyrimSoulsRE → +0x5b35c7 → WaitForSingleObject
+工作线程 po3_Tweaks!...+0x322e1 → SkyrimSE+0x5d1020（空转，CPU 占满）
+         ↑ 由 SkyrimSE+0x5d8265 调用
+```
+
+用 Address Library（`version-1-5-97-0.bin`）换算：`0x5d8265` = ID **36359**（`Actor::UpdateMovement`）+ 0xF5，正是 po3 Tweaks 的 **ToggleCollision Fix** 在 `RELOCATION_ID(36359, 37350) + 0xF0` 写入的 call；被调用的原函数 ID 36248 在 +0x60 处空转，主线程一直在等它所在的任务。DLSS-G、Streamline、驱动线程都处于正常等待，与 DLSS/MFG 无关。
+
+该 Fix 会在角色移动更新时临时改写被碰撞物体的碰撞过滤器，然后恢复。它只是让控制台 `tcl` 可以作用于选中的单个物体，对正常游玩没有作用。处理：在 `po3_Tweaks.ini` 设 `ToggleCollision Fix = false`，重启后确认 `po3_Tweaks.log` 不再出现 `Installed toggle collision fix`。
+
+这一条是本机的堆栈证据，不代表 po3 Tweaks 对所有整合包都会卡死；关闭后若在别处卡死，按同样方法重新抓堆栈，不要凭印象猜。
 
 ## 没有 OptiScaler 菜单
 
