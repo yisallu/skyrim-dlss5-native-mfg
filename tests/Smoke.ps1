@@ -76,6 +76,17 @@ try {
         & $generator -UpscalingMod ($mod + "`nFGOutput=ffx") -LogDirectory $logs -OutputDirectory (Join-Path $temp 'bad')
     } 'Generator rejects INI path injection'
 
+    $patcher = Join-Path $root 'scripts\Patch-MFGUnlockerConflict.ps1'
+    $notUnlocker = Join-Path $temp 'not-unlocker.dll'
+    [IO.File]::WriteAllBytes($notUnlocker, [byte[]](1..64))
+    Assert-Throws {
+        & $patcher -InputPath $notUnlocker -OutputPath (Join-Path $temp 'patched.asi')
+    } 'Patcher rejects anything but the published V1.7.0 DLL'
+    Assert (!(Test-Path -LiteralPath (Join-Path $temp 'patched.asi'))) 'Rejected patch writes nothing'
+    Assert-Throws {
+        & $patcher -InputPath $notUnlocker -OutputPath $notUnlocker
+    } 'Patcher never writes over its input'
+
     $statusFile = Join-Path $temp 'status.json'
     $reader = Join-Path $root 'scripts\Read-MfgStatus.ps1'
     $state = [ordered]@{

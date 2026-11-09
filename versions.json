@@ -78,5 +78,97 @@
       "sha256": "135eaf0733c1e37381a8c28abcf7a862404a54132b81787c04e35d09efc5e36f",
       "authenticodeAtTest": "Valid / NVIDIA Corporation"
     }
-  ]
+  ],
+  "update20261110": {
+    "recordedDate": "2026-11-10",
+    "scope": "Same RTX 4070 machine, driver 621.14 (32.0.16.2114), game 1.5.97, short sessions. Not a general compatibility guarantee.",
+    "tested": {
+      "dlssSuperResolution": "310.9.16",
+      "nativeFgStreamline": "2.14.16",
+      "nativeFgProvider": "310.9.16",
+      "neuralRenderingModel": "310.9.16 (Ada-compatible modified runtime from dlss-unlocked NR-v0.9.86 root)",
+      "neuralRenderingForwarder": "unchanged v0.2.0-dlssnr forwarder (the v0.9.86 forwarder exports evaluate_v2 and does not match this OptiScaler)",
+      "mfgUnlocker": "1.7.0 (FileVersion 1.7.0.1145) + one-byte conflict patch",
+      "optiScaler": "unchanged",
+      "multiplier": 3
+    },
+    "rootCauseOfEarlierBlackScreen": "MFG Unlocker 1.6.1/1.7.0 turns the Ada GPU selection into family=conflict when Community Shaders passes an ID3D11Device to slSetD3DDevice; every D3D12 NGX Evaluate then returns kRejected (0xBAD00001). Not caused by DLSS 310.9.16.",
+    "downloads": [
+      {
+        "id": "streamline",
+        "tag": "v2.14.16",
+        "name": "streamline-sdk-v2.14.16.zip",
+        "url": "https://github.com/NVIDIA-RTX/Streamline/releases/download/v2.14.16/streamline-sdk-v2.14.16.zip",
+        "sha256": "32041e51db0cab709a271b72a352281b690c2abbd669a827809401a5dd23956b",
+        "hashSource": "GitHub release asset digest and local archive"
+      },
+      {
+        "id": "mfg-unlocker",
+        "tag": "v1.7.0",
+        "name": "MFGUnlocker-v1.7.0.zip",
+        "url": "https://github.com/dashdogy/MFG-Unlocker/releases/download/v1.7.0/MFGUnlocker-v1.7.0.zip",
+        "sha256": "5bd19d03288e1ece1d0bb2030ac072b36758045028da192044dcaad73fd901dd",
+        "hashSource": "GitHub release asset digest and published SHA256SUMS.txt"
+      },
+      {
+        "id": "dlss-unlocked-nr",
+        "tag": "NR-v0.9.86",
+        "name": "dlss-unlocked-standalone-NR-v0.9.86.zip",
+        "url": "https://github.com/ShyVortex/dlss-unlocked/releases/download/NR-v0.9.86/dlss-unlocked-standalone-NR-v0.9.86.zip",
+        "sha256": "78436b3b13ea83bed88bfc54c01a00a9b19a6247c9a0bf3d556ebc0a542360fa",
+        "hashSource": "GitHub release asset digest",
+        "warning": "Only the root nvngx_dlssnr.dll is used. Do not run its installer or use its dxgi.dll, forwarder or DLSSG-to-FSR3 parts for this recipe."
+      }
+    ],
+    "files": [
+      {
+        "path": "Shaders/Upscaling/Streamline/nvngx_dlss.dll",
+        "version": "310.9.16",
+        "sha256": "d00b5b0ab29c3ca101b70c3a5ecb3a01b7ef33766a3383a28a18623083e6123e",
+        "authenticodeAtTest": "Valid / NVIDIA Corporation"
+      },
+      {
+        "path": "SKSE/Plugins/OptiScaler/streamline/nvngx_dlssg.dll",
+        "version": "310.9.16",
+        "sha256": "8d59d49b36410dd6b62fef2503a5871d347415bd85d943fa0848563a95dd50c7",
+        "authenticodeAtTest": "Valid / NVIDIA Corporation"
+      },
+      {
+        "path": "SKSE/Plugins/OptiScaler/streamline/sl.dlss_g.dll",
+        "version": "2.14.16",
+        "sha256": "3ed9538df724993bea8a050195a6a78b9c8c8a566d5b05ade477aab3c390e90f",
+        "authenticodeAtTest": "Valid / NVIDIA Corporation"
+      },
+      {
+        "path": "SKSE/Plugins/OptiScaler/DLSSNR/nvngx_dlssnr.dll",
+        "version": "310.9.16",
+        "sha256": "cdfa6c1ec784867182164c7836f324f087b5c9f374d0c9fe46f54999feabf3ed",
+        "redistribute": false,
+        "note": "Unsigned modified runtime; fingerprint only, not an NVIDIA authenticity endorsement."
+      },
+      {
+        "path": "SKSE/Plugins/OptiScaler/DLSSNR/nvngx.dll_dlssnr.dll",
+        "sha256": "17cf51d25d142d0be15fcac945cc928c37849a1cb61011cb9c742d72df86647c",
+        "note": "Unchanged v0.2.0-dlssnr forwarder."
+      },
+      {
+        "path": "SKSE/Plugins/OptiScaler/plugins/MFGUnlocker.asi",
+        "sha256": "175caa1c61ba09a1c0970a6d98bb636bb12119a5d25661f26003e77faf6efc48",
+        "sourceName": "MFGUnlocker.dll",
+        "sourceSha256": "e6b6e6b70a6ed3af839c9647a32fc22660ae6b2d655062c5c072246c91fc10c7",
+        "redistribute": false,
+        "note": "Produced by scripts/Patch-MFGUnlockerConflict.ps1; RVA 0x4C6D0 je 0x4C710 -> je 0x4C71F."
+      }
+    ],
+    "observed": {
+      "upscaleOk": true,
+      "nrDispatch": true,
+      "nrCostMs": 2.95,
+      "gpuSelection": "Ada (SM89), no conflict",
+      "appliedMultiplier": 3,
+      "actualFramesPresented": 3,
+      "dlssgStatus": 0,
+      "midpointReadyAtFirstCreate": true
+    }
+  }
 }

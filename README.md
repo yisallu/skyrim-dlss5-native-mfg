@@ -1,6 +1,6 @@
 # 上古卷轴 5 SE：DLSS 5 神经渲染 + NVIDIA 原生 3X MFG
 
-基于 **RTX 4070 + Community Shaders + MO2** 的一次实际运行记录，整理可供人和其他 AI 重现的安装方法。验证日期：**2026-09-05**。
+基于 **RTX 4070 + Community Shaders + MO2** 的一次实际运行记录，整理可供人和其他 AI 重现的安装方法。原始验证：**2026-09-05**；310.9.16 + MFG Unlocker 1.7.0 更新：**2026-11-10**。
 
 这里的“DLSS 5”指 `OptiScaler_DLSSNR` 调用的 NVIDIA Neural Rendering 模型后处理；不是 Bethesda 或 NVIDIA 为 Skyrim 发布的官方集成。MFG 使用 NVIDIA 的 `nvngx_dlssg.dll`，**不是 DLSSG-to-FSR3、Arturs、Nukem 或 XeFG 替代方案**。4070 上的解锁、DX11 桥接和神经渲染组合都属于非官方实验配置。
 
@@ -13,21 +13,77 @@ English: This is a version-pinned, experimental Skyrim SE reproduction guide for
 - 问题排查：[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
 - 脱敏验证记录：[evidence/session-summary.json](evidence/session-summary.json)
 
-2026-10-21 换上 DLSS 310.9.16 + Streamline 2.14.16 后世界全黑，只剩顶部一条界面。
+## 2026-11-10 更新：310.9.16 全套 + MFG Unlocker 1.7.0（含单字节修补）
 
-当时误判为预设问题（Preset M），改成 Preset K 后**问题依旧**。2026-10-22 用本轮 OptiScaler 日志确认了真正原因：
+此前把"换 310.9.16 后只剩 UI、世界全黑"归因于 DLSS 310.9.16 运行时，**这个结论是错的**。真正原因是 MFG Unlocker 1.6.1 / 1.7.0 自身：
+
+1. Skyrim 是 D3D11 游戏，Community Shaders 调 `slSetD3DDevice` 时传入的是 **ID3D11Device**。
+2. MFG Unlocker 挂钩了这个调用，把设备交给 `gpu_dispatch::ObserveD3D12Device`；`QueryInterface(ID3D12Device)` 失败，LUID 为 0。
+3. `Publish(Unknown, 0)` 把已经选定的 `Ada (SM89)` 改成 `family=conflict`。
+4. 之后每次 D3D12 NGX Evaluate 都被 `kRejected`（= `NVSDK_NGX_Result_FAIL_FeatureNotSupported` = `0xBAD00001`）拒绝，超分没有输出，世界全黑，只剩之后单独绘制的 UI。
+
+判定依据（不是只看一条日志）：
 
 ```text
-[I] DLSSFeatureDx12::InitDLSS _CreateFeature result: NVSDK_NGX_Result_Success
-[E] DLSSFeatureDx12::EvaluateInternal _EvaluateFeature result: BAD00001   (每帧重复)
-[I] IFeature_Dx11wDx12::Evaluate DLSS-NR: ... (upscale ok: false, enabled: true)
+RTXMFG-skyrimse-*.log
+[03:33:58.195] Unified GPU selection: family=Ada (SM89) adapterLuid=0x...
+[03:34:01.788] Streamline plug-in retention allowed at slSetD3DDevice (slInit calls=1)
+[03:34:01.788] Unified GPU selection: family=conflict; restart required adapterLuid=0x...
+OptiScaler.log
+[E] DLSSFeatureDx12::EvaluateInternal _EvaluateFeature result: BAD00001   (每帧)
 ```
 
-`CreateFeature` 成功、`gameHint=K` 也确实生效，但 `EvaluateFeature` 每帧返回 `BAD00001`（NGX 的 FeatureNotSupported）。超分特征建得出来却执行不了，桥接拿不到超分输出，因此世界画面为空；Skyrim 的 UI 是之后单独绘制的，所以只剩顶部一条。同期解锁器记录 `dlssSrDetected=true` 但 `dlssSrRunning=false`，帧生成 `ngxEvaluateCalls=0`。
+- 2026-10-24 用 **SR 310.5.2**（与可用基线相同）+ MFG Unlocker 1.6.1 同样黑屏；只有 RTX40MFGCore 1.2（没有这段 GPU 选择逻辑）的组合正常。DLSS 版本不是变量。
+- 源码对照：[`gpu_selection_policy.h`](https://github.com/dashdogy/MFG-Unlocker/blob/v1.7.0/source/native/gpu_selection_policy.h) 的 `Selection::Observe`、[`gpu_dispatch.cpp`](https://github.com/dashdogy/MFG-Unlocker/blob/v1.7.0/source/native/gpu_dispatch.cpp) 的 `ObserveD3D12Device`、[`ampere_backend.cpp`](https://github.com/dashdogy/MFG-Unlocker/blob/v1.7.0/source/native/ampere_backend.cpp) 中 `Selected() == eConflict` 时 `return kRejected`。
+- 1.7.0 的 `ngxforward.1`（issue 115）修的是另一个问题，对此无效。
 
-结论：**310.9.16 运行时在这条 D3D11→D3D12 桥接上不可用**，与预设无关，改预设不能修复。已整体回滚到 2.10.3 / 310.5.2 SR + 2.12.0 / 310.7.0 FG + RTX40MFGCore 1.2。回滚前的坏档存于 `scratch/dlss5-mfg-20261021/broken-310.9.16-20261022-rollback/`。
+### 修补
 
-排查这类"只剩 UI"时，先看 OptiScaler 日志里有没有 `EvaluateInternal ... BAD00001`，不要只看 `Create` 是否成功。
+[`scripts/Patch-MFGUnlockerConflict.ps1`](scripts/Patch-MFGUnlockerConflict.ps1) 生成一份修补副本，只改 1 字节：`gpu_dispatch::Publish` 内联的 `Observe` 在 RVA `0x4C6D0` 处 `je 0x4C710` → `je 0x4C71F`，即 LUID 为 0 的设备直接忽略，不再把选择改成 conflict。其他冲突路径（不同 LUID、不同架构）不变。
+
+```powershell
+.\scripts\Patch-MFGUnlockerConflict.ps1 `
+  -InputPath  'D:\Downloads\MFGUnlocker-v1.7.0\MFGUnlocker.dll' `
+  -OutputPath 'D:\Staging\MFGUnlocker.asi'
+```
+
+脚本只接受官方 1.7.0 发布的 DLL（SHA256 `e6b6e6b7…c10c7`），核对前后字节和输出哈希（`175caa1c…efc48`），不改输入、不覆盖已有文件。仓库不分发修补后的 DLL。这是非官方修补；上游修复后应换回官方版本。
+
+### 2026-11-10 实测组合（RTX 4070，驱动 621.14）
+
+| 组件 | 版本 | 位置 |
+| --- | --- | --- |
+| DLSS SR `nvngx_dlss.dll` | **310.9.16**（NVIDIA 签名） | `Shaders\Upscaling\Streamline`（CS 原 SL 2.10.3 插件保留） |
+| FG Streamline | **2.14.16** | `SKSE\Plugins\OptiScaler\streamline` |
+| DLSSG `nvngx_dlssg.dll` | **310.9.16**（NVIDIA 签名） | 同上 |
+| NR 模型 `nvngx_dlssnr.dll` | **310.9.16** Ada 修改版（dlss-unlocked NR-v0.9.86 根目录那份） | `SKSE\Plugins\OptiScaler\DLSSNR` |
+| NR 转发器 `nvngx.dll_dlssnr.dll` | **保留 v0.2.0 原版** | 同上 |
+| MFG Unlocker | **1.7.0 + 上述修补**，作为 `OptiScaler\plugins\MFGUnlocker.asi` | 移走 `RTX40MFGCore.asi`（不能两个同时加载） |
+| OptiScaler | 不变（v0.2.0-dlssnr 系列构建） | |
+
+注意：
+
+- dlss-unlocked v0.9.86 的新转发器导出的是 `dlssnr_call_evaluate_v2`，旧 OptiScaler 调用 `dlssnr_call_evaluate`，**二者不能混用**。只换模型本体，转发器跟着 OptiScaler 版本走。
+- `OptiScaler.ini` 的 `OptiDllPath` / `NvngxDlssPath` / `[Plugins] Path` 建议指向**游戏 Data 目录下的 VFS 路径**（纯 ASCII，由 MO2 VFS 解析到获胜的模组）。OptiScaler 无法从含中文的 MO2 模组路径加载 `nvngx_dlss.dll`；指向已不存在的文件夹时 ASI 插件根本不会加载。
+- 建议放进一个**单独的 MO2 覆盖模组**，回退只需取消勾选并恢复 `RTX40MFGCore.asi`。
+
+本轮观察（同一进程、新日志）：
+
+```text
+IFeature_Dx11wDx12::Evaluate DLSS-NR: ... (upscale ok: true, enabled: true)
+DlssNr_Dx12::Dispatch DLSS-NR running at 2560x1600, guides 1505x941
+DlssNr_Dx12::Dispatch DLSS-NR cost: 2.95 ms total = 2.56 ms model + 0.39 ms ours
+Unified GPU selection: family=Ada (SM89)            (之后不再出现 conflict)
+D157 midpoint fix published at provider RVA 0x64D400: ...\nvngx_dlssg.dll
+Applied follow-game options: dynamic=0 multiplier=3x result=0
+DLSS-G state sample: frames presented since prior query=3 (... status=0)
+```
+
+NR 每帧约 2.95 ms；旧 310.8.0 在同机记录约 4.6 ms，个别场景 14 ms。只是本机短会话的对比，未做同场景严格测速。
+
+本次测试中出现过游戏卡死，经线程堆栈确认与 DLSS/MFG 无关（见 [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md#游戏卡死未响应但不是黑屏)）。
+
+以下第 1–10 节是 2026-09-05 的原始复现记录（310.5.2 / 310.7.0 / RTX40MFGCore 1.2），作为可用基线和回退方案保留。
 
 ## 1. 已验证与未验证
 
